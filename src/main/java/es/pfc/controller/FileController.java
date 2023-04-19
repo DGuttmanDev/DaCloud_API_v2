@@ -7,6 +7,8 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/file")
 public class FileController {
@@ -15,11 +17,11 @@ public class FileController {
     private FileService fileService;
 
     @PostMapping("/upload")
-    public ResponseEntity saveFiles(@RequestParam("file") MultipartFile file) {
-        if (file.isEmpty()) {
+    public ResponseEntity saveFiles(@RequestParam("files") List<MultipartFile> files) {
+        if (files.isEmpty()) {
             throw new HttpMessageNotReadableException("");
         }
-        return fileService.saveFiles(file);
+        return fileService.saveFiles(files);
     }
 
 }
