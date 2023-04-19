@@ -25,11 +25,4 @@ public class FileController {
         return fileService.saveFiles(files);
     }
 
-    public ResponseEntity<List<MultipartFile>> downloadFiles(){
-
-
-
-        return null;
-    }
-
 }
