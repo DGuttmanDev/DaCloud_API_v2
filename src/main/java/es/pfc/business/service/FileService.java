@@ -6,9 +6,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 public interface FileService {
 
-    ResponseEntity<List<ArchivoDTO>> saveFiles(List<MultipartFile> file);
+    ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(List<MultipartFile> file);
+    ResponseEntity<List<ArchivoDTO>> replaceFiles(List<MultipartFile> file);
+    ResponseEntity<List<ArchivoDTO>> duplicateFiles(List<MultipartFile> file);
 
 }

@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface ArchivoRepository extends JpaRepository<Archivo, Long> {
 
+    Archivo findArchivoByNombre(String nombre);
+
 }

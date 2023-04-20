@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RestController
@@ -20,11 +21,27 @@ public class FileController {
     private FileService fileService;
 
     @PostMapping("/upload")
-    public ResponseEntity<List<ArchivoDTO>> saveFiles(@RequestParam("files") List<MultipartFile> files) {
+    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(@RequestParam("files") List<MultipartFile> files) {
         if (files.isEmpty()) {
             throw new HttpMessageNotReadableException("");
         }
         return fileService.saveFiles(files);
+    }
+
+    @PostMapping("/a")
+    public ResponseEntity<List<ArchivoDTO>> replaceFiles(@RequestParam("files") List<MultipartFile> files) {
+        if (files.isEmpty()) {
+            throw new HttpMessageNotReadableException("");
+        }
+        return null;
+    }
+
+    @PostMapping("/b")
+    public ResponseEntity<List<ArchivoDTO>> duplicateFiles(@RequestParam("files") List<MultipartFile> files) {
+        if (files.isEmpty()) {
+            throw new HttpMessageNotReadableException("");
+        }
+        return null;
     }
 
 }

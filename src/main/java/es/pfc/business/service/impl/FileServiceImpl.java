@@ -20,7 +20,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class FileServiceImpl implements FileService {
@@ -35,29 +37,65 @@ public class FileServiceImpl implements FileService {
     private ArchivoMapper archivoMapper;
 
     @Override
-    public ResponseEntity<List<ArchivoDTO>> saveFiles(List<MultipartFile> files) {
+    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(List<MultipartFile> files) {
 
-        List<ArchivoDTO> archivoDTOList = new ArrayList<>();
+        List<ArchivoDTO> archivosGuardados = new ArrayList<>();
+        List<ArchivoDTO> archivosExistentes = new ArrayList<>();
 
-        for (MultipartFile file: files){
+        for (MultipartFile file : files) {
 
             try {
+
+                Archivo archivoExistente = archivoRepository.findArchivoByNombre(file.getOriginalFilename());
                 byte[] bytes = file.getBytes();
                 Path path = Paths.get(UPLOAD_DIR + File.separator + file.getOriginalFilename());
-                Files.write(path, bytes);
+
+                if (archivoExistente == null) {
+
+                    if (Files.exists(path)) {
+                        System.err.println("Error, archivo existente en el sistema pero no registrado en base de datos.");
+                        throw new SaveFileException();
+                    } else {
+                        Files.write(path, bytes);
+                        Archivo archivo = new Archivo();
+                        archivo.setNombre(file.getOriginalFilename());
+                        Archivo archivoGuardado = archivoRepository.save(archivo);
+                        archivosGuardados.add(archivoMapper.archivoToArchivoDTO(archivoGuardado));
+                    }
+
+                } else {
+
+                    if (!Files.exists(path)) {
+                        System.err.println("Error, archivo registrado en base de datos pero no encontrado en el sistema.");
+                        throw new SaveFileException();
+                    } else {
+                        archivosExistentes.add(archivoMapper.archivoToArchivoDTO(archivoExistente));
+                    }
+
+                }
+
             } catch (IOException e) {
                 throw new SaveFileException();
             }
 
-            Archivo archivo = new Archivo();
-            archivo.setNombre(file.getOriginalFilename());
-            Archivo archivoGuardado = archivoRepository.save(archivo);
-            archivoDTOList.add(archivoMapper.archivoToArchivoDTO(archivoGuardado));
-
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(archivoDTOList);
+        Map<String, List<ArchivoDTO>> archivosMap = new HashMap<>();
+        archivosMap.put("archivosGuardados", archivosGuardados);
+        archivosMap.put("archivosExistentes", archivosExistentes);
 
+        return ResponseEntity.status(HttpStatus.OK).body(archivosMap);
+
+    }
+
+    @Override
+    public ResponseEntity<List<ArchivoDTO>> replaceFiles(List<MultipartFile> file) {
+        return null;
+    }
+
+    @Override
+    public ResponseEntity<List<ArchivoDTO>> duplicateFiles(List<MultipartFile> file) {
+        return null;
     }
 
 }

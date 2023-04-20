@@ -3,10 +3,11 @@ package es.pfc.business.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.io.Serializable;
 
-@Getter @Setter
+@Getter @Setter @ToString
 @Entity
 public class Archivo implements Serializable {
 
@@ -16,4 +17,10 @@ public class Archivo implements Serializable {
 
     private String nombre;
 
+    public Archivo() {
+    }
+
+    public Archivo(String nombre) {
+        this.nombre = nombre;
+    }
 }
