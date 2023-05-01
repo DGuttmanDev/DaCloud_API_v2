@@ -21,11 +21,12 @@ public class FileController {
     private FileService fileService;
 
     @PostMapping("/upload")
-    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(@RequestParam("files") List<MultipartFile> files) {
+    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(@RequestParam("files") List<MultipartFile> files, @RequestHeader("token") String token) {
+        System.out.println(token);
         if (files.isEmpty()) {
             throw new HttpMessageNotReadableException("");
         }
-        return fileService.saveFiles(files);
+        return fileService.saveFiles(files, token);
     }
 
     @PostMapping("/a")

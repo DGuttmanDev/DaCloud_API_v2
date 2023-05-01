@@ -17,10 +17,14 @@ public class Archivo implements Serializable {
 
     private String nombre;
 
+    @ManyToOne
+    private User user;
+
     public Archivo() {
     }
 
     public Archivo(String nombre) {
         this.nombre = nombre;
     }
+
 }
