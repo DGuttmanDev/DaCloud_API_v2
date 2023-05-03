@@ -11,6 +11,7 @@ import java.util.Map;
 public interface FileService {
 
     ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(List<MultipartFile> file);
+    ResponseEntity saveSingleFile(MultipartFile file);
     ResponseEntity<List<ArchivoDTO>> replaceFiles(List<MultipartFile> file);
     ResponseEntity<List<ArchivoDTO>> duplicateFiles(List<MultipartFile> file);
 

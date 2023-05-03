@@ -3,6 +3,7 @@ package es.pfc.controller;
 import es.pfc.business.dto.ArchivoDTO;
 import es.pfc.business.service.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.stereotype.Controller;
@@ -27,13 +28,17 @@ public class FileController {
         }
         return fileService.saveFiles(files);
     }
-
-    @PostMapping("/a")
-    public ResponseEntity<List<ArchivoDTO>> replaceFiles(@RequestParam("files") List<MultipartFile> files) {
-        if (files.isEmpty()) {
+    @PostMapping("/single/upload")
+    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveSingleFile(@RequestParam("file") MultipartFile file) {
+        if (file == null) {
             throw new HttpMessageNotReadableException("");
         }
-        return null;
+        return fileService.saveSingleFile(file);
+    }
+
+    @GetMapping("/test")
+    public ResponseEntity replaceFiles() {
+        return new ResponseEntity<>("Hola mundo", HttpStatus.OK);
     }
 
     @PostMapping("/b")

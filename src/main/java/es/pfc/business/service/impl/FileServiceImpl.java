@@ -89,6 +89,44 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
+    public ResponseEntity saveSingleFile(MultipartFile file) {
+
+        try {
+
+            Archivo archivoExistente = archivoRepository.findArchivoByNombre(file.getOriginalFilename());
+            byte[] bytes = file.getBytes();
+            Path path = Paths.get(UPLOAD_DIR + File.separator + file.getOriginalFilename());
+
+            if (archivoExistente == null) {
+
+                if (Files.exists(path)) {
+                    System.err.println("Error, archivo existente en el sistema pero no registrado en base de datos.");
+                    throw new SaveFileException();
+                } else {
+                    Files.write(path, bytes);
+                    Archivo archivo = new Archivo();
+                    archivo.setNombre(file.getOriginalFilename());
+                    Archivo archivoGuardado = archivoRepository.save(archivo);
+                    return ResponseEntity.status(HttpStatus.OK).body(archivoGuardado.getId());
+                }
+
+            } else {
+
+                if (!Files.exists(path)) {
+                    System.err.println("Error, archivo registrado en base de datos pero no encontrado en el sistema.");
+                    throw new SaveFileException();
+                }
+
+            }
+
+        } catch (IOException e) {
+            throw new SaveFileException();
+        }
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).build();
+    }
+
+    @Override
     public ResponseEntity<List<ArchivoDTO>> replaceFiles(List<MultipartFile> file) {
         return null;
     }
