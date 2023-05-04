@@ -29,7 +29,7 @@ public class FileController {
         return fileService.saveFiles(files, token);
     }
 
-    @PostMapping("/a")
+    @PostMapping("/replace")
     public ResponseEntity<List<ArchivoDTO>> replaceFiles(@RequestParam("files") List<MultipartFile> files) {
         if (files.isEmpty()) {
             throw new HttpMessageNotReadableException("");
@@ -37,14 +37,12 @@ public class FileController {
         return null;
     }
 
-    @PostMapping("/b")
+    @PostMapping("/duplicate")
     public ResponseEntity<List<ArchivoDTO>> duplicateFiles(@RequestParam("files") List<MultipartFile> files) {
         if (files.isEmpty()) {
             throw new HttpMessageNotReadableException("");
         }
         return null;
     }
-
-
 
 }
