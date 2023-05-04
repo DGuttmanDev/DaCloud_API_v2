@@ -12,6 +12,8 @@ import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.security.SignatureException;
+
 @ControllerAdvice
 public class FileExceptionHandler {
 
@@ -33,6 +35,11 @@ public class FileExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<String> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error en el formato de la solicitud.");
+    }
+
+    @ExceptionHandler(SignatureException.class)
+    public ResponseEntity<String> handleTokenException(SignatureException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No se ha podido autenticar el usuario.");
     }
 
 }

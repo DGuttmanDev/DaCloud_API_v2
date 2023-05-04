@@ -3,13 +3,13 @@ package es.pfc.controller;
 import es.pfc.business.dto.ArchivoDTO;
 import es.pfc.business.service.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.security.SignatureException;
 import java.util.List;
 import java.util.Map;
 
@@ -22,26 +22,22 @@ public class FileController {
     private FileService fileService;
 
     @PostMapping("/upload")
-    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(@RequestParam("files") List<MultipartFile> files) {
+    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(@RequestParam("files") List<MultipartFile> files, @RequestHeader("token") String token) throws SignatureException {
         if (files.isEmpty()) {
             throw new HttpMessageNotReadableException("");
         }
-        return fileService.saveFiles(files);
+        return fileService.saveFiles(files, token);
     }
-    @PostMapping("/single/upload")
-    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveSingleFile(@RequestParam("file") MultipartFile file) {
-        if (file == null) {
+
+    @PostMapping("/replace")
+    public ResponseEntity<List<ArchivoDTO>> replaceFiles(@RequestParam("files") List<MultipartFile> files) {
+        if (files.isEmpty()) {
             throw new HttpMessageNotReadableException("");
         }
-        return fileService.saveSingleFile(file);
+        return null;
     }
 
-    @GetMapping("/test")
-    public ResponseEntity replaceFiles() {
-        return new ResponseEntity<>("Hola mundo", HttpStatus.OK);
-    }
-
-    @PostMapping("/b")
+    @PostMapping("/duplicate")
     public ResponseEntity<List<ArchivoDTO>> duplicateFiles(@RequestParam("files") List<MultipartFile> files) {
         if (files.isEmpty()) {
             throw new HttpMessageNotReadableException("");

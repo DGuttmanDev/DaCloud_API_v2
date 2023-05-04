@@ -4,8 +4,10 @@ import es.pfc.business.dto.ArchivoDTO;
 import es.pfc.business.mapper.ArchivoMapper;
 import es.pfc.business.model.Archivo;
 import es.pfc.business.repository.ArchivoRepository;
+import es.pfc.business.repository.UserRepository;
 import es.pfc.business.service.FileService;
 import es.pfc.exception.SaveFileException;
+import es.pfc.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
@@ -19,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,57 +37,69 @@ public class FileServiceImpl implements FileService {
     private ArchivoRepository archivoRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private ArchivoMapper archivoMapper;
 
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+
     @Override
-    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(List<MultipartFile> files) {
+    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(List<MultipartFile> files, String token) throws SignatureException {
 
-        List<ArchivoDTO> archivosGuardados = new ArrayList<>();
-        List<ArchivoDTO> archivosExistentes = new ArrayList<>();
+        if (jwtTokenProvider.isTokenExpired(token)){
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else if (!userRepository.existsByMail(jwtTokenProvider.extractEmail(token))){
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else {
+            List<ArchivoDTO> archivosGuardados = new ArrayList<>();
+            List<ArchivoDTO> archivosExistentes = new ArrayList<>();
 
-        for (MultipartFile file : files) {
+            for (MultipartFile file : files) {
 
-            try {
+                try {
 
-                Archivo archivoExistente = archivoRepository.findArchivoByNombre(file.getOriginalFilename());
-                byte[] bytes = file.getBytes();
-                Path path = Paths.get(UPLOAD_DIR + File.separator + file.getOriginalFilename());
+                    Archivo archivoExistente = archivoRepository.findArchivoByNombre(file.getOriginalFilename());
+                    byte[] bytes = file.getBytes();
+                    Path path = Paths.get(UPLOAD_DIR + File.separator + file.getOriginalFilename());
 
-                if (archivoExistente == null) {
+                    if (archivoExistente == null) {
 
-                    if (Files.exists(path)) {
-                        System.err.println("Error, archivo existente en el sistema pero no registrado en base de datos.");
-                        throw new SaveFileException();
+                        if (Files.exists(path)) {
+                            System.err.println("Error, archivo existente en el sistema pero no registrado en base de datos.");
+                            throw new SaveFileException();
+                        } else {
+                            Files.write(path, bytes);
+                            Archivo archivo = new Archivo();
+                            archivo.setNombre(file.getOriginalFilename());
+                            Archivo archivoGuardado = archivoRepository.save(archivo);
+                            archivosGuardados.add(archivoMapper.archivoToArchivoDTO(archivoGuardado));
+                        }
+
                     } else {
-                        Files.write(path, bytes);
-                        Archivo archivo = new Archivo();
-                        archivo.setNombre(file.getOriginalFilename());
-                        Archivo archivoGuardado = archivoRepository.save(archivo);
-                        archivosGuardados.add(archivoMapper.archivoToArchivoDTO(archivoGuardado));
+
+                        if (!Files.exists(path)) {
+                            System.err.println("Error, archivo registrado en base de datos pero no encontrado en el sistema.");
+                            throw new SaveFileException();
+                        } else {
+                            archivosExistentes.add(archivoMapper.archivoToArchivoDTO(archivoExistente));
+                        }
+
                     }
 
-                } else {
-
-                    if (!Files.exists(path)) {
-                        System.err.println("Error, archivo registrado en base de datos pero no encontrado en el sistema.");
-                        throw new SaveFileException();
-                    } else {
-                        archivosExistentes.add(archivoMapper.archivoToArchivoDTO(archivoExistente));
-                    }
-
+                } catch (IOException e) {
+                    throw new SaveFileException();
                 }
 
-            } catch (IOException e) {
-                throw new SaveFileException();
             }
 
+            Map<String, List<ArchivoDTO>> archivosMap = new HashMap<>();
+            archivosMap.put("archivosGuardados", archivosGuardados);
+            archivosMap.put("archivosExistentes", archivosExistentes);
+
+            return ResponseEntity.status(HttpStatus.OK).body(archivosMap);
         }
-
-        Map<String, List<ArchivoDTO>> archivosMap = new HashMap<>();
-        archivosMap.put("archivosGuardados", archivosGuardados);
-        archivosMap.put("archivosExistentes", archivosExistentes);
-
-        return ResponseEntity.status(HttpStatus.OK).body(archivosMap);
 
     }
 
