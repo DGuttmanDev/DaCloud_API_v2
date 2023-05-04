@@ -3,6 +3,7 @@ package es.pfc.business.service.impl;
 import es.pfc.business.dto.ArchivoDTO;
 import es.pfc.business.mapper.ArchivoMapper;
 import es.pfc.business.model.Archivo;
+import es.pfc.business.model.User;
 import es.pfc.business.repository.ArchivoRepository;
 import es.pfc.business.repository.UserRepository;
 import es.pfc.business.service.FileService;
@@ -10,7 +11,6 @@ import es.pfc.exception.SaveFileException;
 import es.pfc.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -46,13 +46,15 @@ public class FileServiceImpl implements FileService {
     private JwtTokenProvider jwtTokenProvider;
 
     @Override
-    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(List<MultipartFile> files, String token) throws SignatureException {
+    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(List<MultipartFile> files, String token) throws SignatureException{
 
         if (jwtTokenProvider.isTokenExpired(token)){
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         } else if (!userRepository.existsByMail(jwtTokenProvider.extractEmail(token))){
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         } else {
+
+            User usuario = userRepository.findByMail(jwtTokenProvider.extractEmail(token));
             List<ArchivoDTO> archivosGuardados = new ArrayList<>();
             List<ArchivoDTO> archivosExistentes = new ArrayList<>();
 
@@ -62,7 +64,7 @@ public class FileServiceImpl implements FileService {
 
                     Archivo archivoExistente = archivoRepository.findArchivoByNombre(file.getOriginalFilename());
                     byte[] bytes = file.getBytes();
-                    Path path = Paths.get(UPLOAD_DIR + File.separator + file.getOriginalFilename());
+                    Path path = Paths.get(UPLOAD_DIR + File.separator + usuario.getNick() + File.separator + file.getOriginalFilename());
 
                     if (archivoExistente == null) {
 
@@ -71,8 +73,11 @@ public class FileServiceImpl implements FileService {
                             throw new SaveFileException();
                         } else {
                             Files.write(path, bytes);
+                            long sizeBytes = Files.size(path);
                             Archivo archivo = new Archivo();
                             archivo.setNombre(file.getOriginalFilename());
+                            archivo.setFileSize(sizeBytes);
+                            archivo.setUser(usuario);
                             Archivo archivoGuardado = archivoRepository.save(archivo);
                             archivosGuardados.add(archivoMapper.archivoToArchivoDTO(archivoGuardado));
                         }

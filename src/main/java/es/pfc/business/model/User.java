@@ -1,5 +1,6 @@
 package es.pfc.business.model;
 
+import es.pfc.business.model.enumeration.Subscription;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,6 +28,9 @@ public class User implements Serializable {
     private String nick;
     private String password;
     private String mail;
+
+    @Enumerated(EnumType.STRING)
+    private Subscription subscription;
 
     @Column(name = "fecha_registro")
     @Temporal(TemporalType.TIMESTAMP)
