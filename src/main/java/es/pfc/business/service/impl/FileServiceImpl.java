@@ -11,13 +11,15 @@ import es.pfc.exception.SaveFileException;
 import es.pfc.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -46,11 +48,11 @@ public class FileServiceImpl implements FileService {
     private JwtTokenProvider jwtTokenProvider;
 
     @Override
-    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(List<MultipartFile> files, String token) throws SignatureException{
+    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(List<MultipartFile> files, String token) throws SignatureException {
 
-        if (jwtTokenProvider.isTokenExpired(token)){
+        if (jwtTokenProvider.isTokenExpired(token)) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        } else if (!userRepository.existsByMail(jwtTokenProvider.extractEmail(token))){
+        } else if (!userRepository.existsByMail(jwtTokenProvider.extractEmail(token))) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         } else {
 
@@ -62,7 +64,7 @@ public class FileServiceImpl implements FileService {
 
                 try {
 
-                    Archivo archivoExistente = archivoRepository.findArchivoByNombre(file.getOriginalFilename());
+                    Archivo archivoExistente = archivoRepository.findArchivoByNombreAndUser(file.getOriginalFilename(), usuario);
                     byte[] bytes = file.getBytes();
                     Path path = Paths.get(UPLOAD_DIR + File.separator + usuario.getNick() + File.separator + file.getOriginalFilename());
 
@@ -153,6 +155,40 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public ResponseEntity<List<ArchivoDTO>> duplicateFiles(List<MultipartFile> file) {
+        return null;
+    }
+
+    @Override
+    public ResponseEntity downloadFile(Long id, String token) throws SignatureException {
+
+        if (jwtTokenProvider.isTokenExpired(token)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else if (!userRepository.existsByMail(jwtTokenProvider.extractEmail(token))) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else {
+            if (archivoRepository.existsById(id)) {
+                Archivo archivo = archivoRepository.findById(id).orElse(null);
+                User usuario = userRepository.findByMail(jwtTokenProvider.extractEmail(token));
+                Path path = Paths.get(UPLOAD_DIR + File.separator + usuario.getNick() + File.separator + archivo.getNombre());
+                if (!Files.exists(path)){
+                    return new ResponseEntity(HttpStatus.NOT_FOUND);
+                } else {
+                    File archivo2 = new File(path.toUri());
+                    try {
+                        InputStream inputStream = new FileInputStream(archivo2);
+                        InputStreamResource inputStreamResource = new InputStreamResource(inputStream);
+                        return ResponseEntity.ok()
+                                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + archivo2.getName())
+                                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                                .contentLength(archivo2.length())
+                                .body(inputStreamResource);
+                    } catch (FileNotFoundException e) {
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                    }
+                }
+            }
+        }
+
         return null;
     }
 

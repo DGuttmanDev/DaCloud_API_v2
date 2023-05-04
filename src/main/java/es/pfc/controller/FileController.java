@@ -45,4 +45,10 @@ public class FileController {
         return null;
     }
 
+    @GetMapping("/download")
+    public ResponseEntity downloadFile(@RequestParam("id") Long id, @RequestHeader("token") String token ) throws SignatureException {
+
+        return fileService.downloadFile(id, token);
+    }
+
 }

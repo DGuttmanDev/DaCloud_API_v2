@@ -18,4 +18,6 @@ public interface FileService {
     ResponseEntity<List<ArchivoDTO>> replaceFiles(List<MultipartFile> file);
     ResponseEntity<List<ArchivoDTO>> duplicateFiles(List<MultipartFile> file);
 
+    ResponseEntity downloadFile(Long id, String token) throws SignatureException;
+
 }
