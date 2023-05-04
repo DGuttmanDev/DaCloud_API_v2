@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,7 +46,7 @@ public class FileServiceImpl implements FileService {
     private JwtTokenProvider jwtTokenProvider;
 
     @Override
-    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(List<MultipartFile> files, String token) {
+    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(List<MultipartFile> files, String token) throws SignatureException {
 
         if (jwtTokenProvider.isTokenExpired(token)){
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);

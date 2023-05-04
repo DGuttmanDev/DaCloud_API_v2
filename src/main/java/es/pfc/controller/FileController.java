@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.security.SignatureException;
 import java.util.List;
 import java.util.Map;
 
@@ -21,8 +22,7 @@ public class FileController {
     private FileService fileService;
 
     @PostMapping("/upload")
-    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(@RequestParam("files") List<MultipartFile> files, @RequestHeader("token") String token) {
-        System.out.println(token);
+    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(@RequestParam("files") List<MultipartFile> files, @RequestHeader("token") String token) throws SignatureException {
         if (files.isEmpty()) {
             throw new HttpMessageNotReadableException("");
         }
@@ -44,5 +44,7 @@ public class FileController {
         }
         return null;
     }
+
+
 
 }
