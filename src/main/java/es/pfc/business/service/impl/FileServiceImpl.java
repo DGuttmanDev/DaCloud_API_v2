@@ -149,25 +149,50 @@ public class FileServiceImpl implements FileService {
         } else {
             User usuario = userRepository.findByMail(jwtTokenProvider.extractEmail(token));
             if (newFolderDTO.getIdDirectorioPadre() == 0L){
+                int contador = 0;
                 File nuevoDirectorio = new File(UPLOAD_DIR + File.separator + usuario.getNick() + File.separator + newFolderDTO.getNombreDirectorio());
-                boolean dirStatus = nuevoDirectorio.mkdir();
-                if (dirStatus){
-                    Archivo archivo = new Archivo(newFolderDTO.getNombreDirectorio());
-                    archivo.setUser(usuario);
-                    archivo.setPath(nuevoDirectorio.getAbsolutePath());
-                    archivoRepository.save(archivo);
-
-                    ArchivoDTO archivoDTO = archivoMapper.archivoToArchivoDTO(archivo);
-                    return new ResponseEntity(archivoDTO, HttpStatus.OK);
+                if (nuevoDirectorio.exists()){
+                    return new ResponseEntity<>("Ya existe un directorio con el nombre especificado.", HttpStatus.CONFLICT);
                 } else {
-                    return new ResponseEntity<>(HttpStatus.CONFLICT);
+                    boolean dirStatus = nuevoDirectorio.mkdir();
+                    if (dirStatus){
+                        Archivo archivo = new Archivo(newFolderDTO.getNombreDirectorio());
+                        archivo.setUser(usuario);
+                        archivo.setPath(nuevoDirectorio.getAbsolutePath());
+                        archivoRepository.save(archivo);
+
+                        ArchivoDTO archivoDTO = archivoMapper.archivoToArchivoDTO(archivo);
+                        return new ResponseEntity(archivoDTO, HttpStatus.OK);
+                    } else {
+                        return new ResponseEntity<>(HttpStatus.CONFLICT);
+                    }
                 }
             } else {
-                Archivo directorioPadre = archivoRepository.getById(newFolderDTO.getIdDirectorioPadre());
+                Archivo directorioPadre = archivoRepository.findById(newFolderDTO.getIdDirectorioPadre()).orElse(null);
+                if (directorioPadre != null){
+                    File nuevoDirectorio = new File(directorioPadre.getPath() + File.separator + newFolderDTO.getNombreDirectorio());
+                    if (!nuevoDirectorio.exists()){
+                        boolean dirStatus = nuevoDirectorio.mkdir();
+                        if (dirStatus){
+                            Archivo archivo = new Archivo(newFolderDTO.getNombreDirectorio());
+                            archivo.setUser(usuario);
+                            archivo.setPath(nuevoDirectorio.getAbsolutePath());
+                            archivoRepository.save(archivo);
+
+                            ArchivoDTO archivoDTO = archivoMapper.archivoToArchivoDTO(archivo);
+                            return new ResponseEntity(archivoDTO, HttpStatus.OK);
+                        } else {
+                            return new ResponseEntity<>(HttpStatus.CONFLICT);
+                        }
+                    } else {
+                        return new ResponseEntity<>("Ya existe un directorio con el nombre especificado.", HttpStatus.CONFLICT);
+                    }
+
+                }
             }
 
         }
-        return null;
+        return new ResponseEntity<>(HttpStatus.CONFLICT);
     }
 
     @Override
