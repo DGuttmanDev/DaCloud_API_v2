@@ -35,9 +35,9 @@ public class SessionServiceImpl implements SessionService {
     public ResponseEntity register(RegisterDTO usuario) {
 
         if (userRepository.existsByMail(usuario.getMail())){
-            return new ResponseEntity<String>("El correo ya está siendo en uso", HttpStatus.CONFLICT);
+            return new ResponseEntity<>("El correo ya está siendo en uso", HttpStatus.CONFLICT);
         } else if (userRepository.existsByNick(usuario.getNick())){
-            return new ResponseEntity<String>("El nick ya está siendo en uso", HttpStatus.CONFLICT);
+            return new ResponseEntity<>("El nick ya está siendo en uso", HttpStatus.CONFLICT);
         }else {
             User user = userMapper.RegisterDTOToUser(usuario);
             user.setSubscription(Subscription.GRATUITA);

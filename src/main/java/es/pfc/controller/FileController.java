@@ -50,7 +50,7 @@ public class FileController {
         return fileService.createFolder(newFolderDTO, token);
     }
 
-    @GetMapping("/preview")
+    @GetMapping("/home/preview")
     public ResponseEntity<List<ArchivoDTO>> getPreview( @RequestHeader("token") String token) throws SignatureException {
         return fileService.getPreview(token);
     }
