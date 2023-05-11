@@ -3,6 +3,7 @@ package es.pfc.business.service;
 import es.pfc.business.dto.ArchivoDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -16,8 +17,7 @@ public interface FileService {
 
     ResponseEntity saveFile(MultipartFile file) throws IOException;
 
-    ResponseEntity<List<ArchivoDTO>> replaceFiles(List<MultipartFile> file);
-    ResponseEntity<List<ArchivoDTO>> duplicateFiles(List<MultipartFile> file);
+    ResponseEntity<List<ArchivoDTO>> getPreview(String token) throws SignatureException;
 
     ResponseEntity downloadFile(Long id, String token) throws SignatureException;
 

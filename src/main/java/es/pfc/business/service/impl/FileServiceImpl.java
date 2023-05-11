@@ -139,13 +139,31 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public ResponseEntity<List<ArchivoDTO>> replaceFiles(List<MultipartFile> file) {
-        return null;
-    }
+    public ResponseEntity<List<ArchivoDTO>> getPreview(String token) throws SignatureException {
+        if (jwtTokenProvider.isTokenExpired(token)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else if (!userRepository.existsByMail(jwtTokenProvider.extractEmail(token))) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else {
+            List<ArchivoDTO> listaPreview = new ArrayList<>();
+            User usuario = userRepository.findByMail(jwtTokenProvider.extractEmail(token));
+            File directorio = new File(UPLOAD_DIR + File.separator + usuario.getNick());
+            File[] archivos = directorio.listFiles();
 
-    @Override
-    public ResponseEntity<List<ArchivoDTO>> duplicateFiles(List<MultipartFile> file) {
-        return null;
+            for (File file: archivos){
+                if (file.isDirectory()){
+                    ArchivoDTO archivoDTO = new ArchivoDTO(null, file.getName());
+                    listaPreview.add(archivoDTO);
+                } else if (file.isFile()){
+                    if (archivoRepository.existsByNombreAndUser(file.getName(), usuario)){
+                        Archivo archivo = archivoRepository.findArchivoByNombreAndUser(file.getName(), usuario);
+                        ArchivoDTO archivoDTO = new ArchivoDTO(archivo.getId(), file.getName());
+                        listaPreview.add(archivoDTO);
+                    }
+                }
+            }
+            return new ResponseEntity<>(listaPreview, HttpStatus.OK);
+        }
     }
 
     @Override

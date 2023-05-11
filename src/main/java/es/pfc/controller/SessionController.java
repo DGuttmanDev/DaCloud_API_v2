@@ -18,13 +18,12 @@ public class SessionController {
 
     @PostMapping("/register")
     public ResponseEntity register(@RequestBody RegisterDTO usuario) {
+
         return sessionService.register(usuario);
     }
 
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody LoginDTO usuario) {
-        System.out.println(usuario.getMail());
-        System.out.println(usuario.getPassword());
         return sessionService.login(usuario);
     }
 
