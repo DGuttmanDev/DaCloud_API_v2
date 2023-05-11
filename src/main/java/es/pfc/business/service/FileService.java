@@ -2,6 +2,7 @@ package es.pfc.business.service;
 
 import es.pfc.business.dto.ArchivoDTO;
 import es.pfc.business.dto.NewFolderDTO;
+import es.pfc.business.dto.PreviewDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,7 +22,7 @@ public interface FileService {
 
     ResponseEntity createFolder(NewFolderDTO newFolderDTO, String token) throws SignatureException;
 
-    ResponseEntity<List<ArchivoDTO>> getPreview(String token) throws SignatureException;
+    ResponseEntity<List<PreviewDTO>> getHomePreview(String token) throws SignatureException;
 
     ResponseEntity downloadFile(Long id, String token) throws SignatureException;
 

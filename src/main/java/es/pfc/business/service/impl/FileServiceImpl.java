@@ -2,6 +2,7 @@ package es.pfc.business.service.impl;
 
 import es.pfc.business.dto.ArchivoDTO;
 import es.pfc.business.dto.NewFolderDTO;
+import es.pfc.business.dto.PreviewDTO;
 import es.pfc.business.mapper.ArchivoMapper;
 import es.pfc.business.model.Archivo;
 import es.pfc.business.model.User;
@@ -122,17 +123,17 @@ public class FileServiceImpl implements FileService {
             byte[] bytes = file.getBytes();
             Path path = Paths.get(UPLOAD_DIR + File.separator + file.getOriginalFilename());
 
-                if (Files.exists(path)) {
-                    System.err.println("Error, archivo existente en el sistema pero no registrado en base de datos.");
-                    throw new SaveFileException();
-                } else {
-                    Files.write(path, bytes);
-                    long sizeBytes = Files.size(path);
-                    Archivo archivo = new Archivo();
-                    archivo.setNombre(file.getOriginalFilename());
-                    archivo.setFileSize(sizeBytes);
-                    Archivo archivoGuardado = archivoRepository.save(archivo);
-                }
+            if (Files.exists(path)) {
+                System.err.println("Error, archivo existente en el sistema pero no registrado en base de datos.");
+                throw new SaveFileException();
+            } else {
+                Files.write(path, bytes);
+                long sizeBytes = Files.size(path);
+                Archivo archivo = new Archivo();
+                archivo.setNombre(file.getOriginalFilename());
+                archivo.setFileSize(sizeBytes);
+                Archivo archivoGuardado = archivoRepository.save(archivo);
+            }
 
         } catch (IOException e) {
             throw new SaveFileException();
@@ -148,14 +149,14 @@ public class FileServiceImpl implements FileService {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         } else {
             User usuario = userRepository.findByMail(jwtTokenProvider.extractEmail(token));
-            if (newFolderDTO.getIdDirectorioPadre() == 0L){
+            if (newFolderDTO.getIdDirectorioPadre() == 0L) {
                 int contador = 0;
                 File nuevoDirectorio = new File(UPLOAD_DIR + File.separator + usuario.getNick() + File.separator + newFolderDTO.getNombreDirectorio());
-                if (nuevoDirectorio.exists()){
+                if (nuevoDirectorio.exists()) {
                     return new ResponseEntity<>("Ya existe un directorio con el nombre especificado.", HttpStatus.CONFLICT);
                 } else {
                     boolean dirStatus = nuevoDirectorio.mkdir();
-                    if (dirStatus){
+                    if (dirStatus) {
                         Archivo archivo = new Archivo(newFolderDTO.getNombreDirectorio());
                         archivo.setUser(usuario);
                         archivo.setPath(nuevoDirectorio.getAbsolutePath());
@@ -169,11 +170,11 @@ public class FileServiceImpl implements FileService {
                 }
             } else {
                 Archivo directorioPadre = archivoRepository.findById(newFolderDTO.getIdDirectorioPadre()).orElse(null);
-                if (directorioPadre != null){
+                if (directorioPadre != null) {
                     File nuevoDirectorio = new File(directorioPadre.getPath() + File.separator + newFolderDTO.getNombreDirectorio());
-                    if (!nuevoDirectorio.exists()){
+                    if (!nuevoDirectorio.exists()) {
                         boolean dirStatus = nuevoDirectorio.mkdir();
-                        if (dirStatus){
+                        if (dirStatus) {
                             Archivo archivo = new Archivo(newFolderDTO.getNombreDirectorio());
                             archivo.setUser(usuario);
                             archivo.setPath(nuevoDirectorio.getAbsolutePath());
@@ -196,27 +197,23 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public ResponseEntity<List<ArchivoDTO>> getPreview(String token) throws SignatureException {
-        if (jwtTokenProvider.isTokenExpired(token)) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        } else if (!userRepository.existsByMail(jwtTokenProvider.extractEmail(token))) {
+    public ResponseEntity<List<PreviewDTO>> getHomePreview(String token) throws SignatureException {
+        if (!checkAuth(token)) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         } else {
-            List<ArchivoDTO> listaPreview = new ArrayList<>();
+            List<PreviewDTO> listaPreview = new ArrayList<>();
             User usuario = userRepository.findByMail(jwtTokenProvider.extractEmail(token));
-            File directorio = new File(UPLOAD_DIR + File.separator + usuario.getNick());
-            File[] archivos = directorio.listFiles();
+            File directorioRaiz = new File(UPLOAD_DIR + File.separator + usuario.getNick());
+            File[] archivos = directorioRaiz.listFiles();
 
-            for (File file: archivos){
-                if (file.isDirectory()){
-                    ArchivoDTO archivoDTO = new ArchivoDTO(null, file.getName());
+            for (File file : archivos) {
+                Archivo archivo = archivoRepository.findArchivoByNombreAndUser(file.getName(), usuario);
+                if (file.isDirectory()) {
+                    PreviewDTO archivoDTO = new PreviewDTO(archivo.getId(), file.getName(), true);
                     listaPreview.add(archivoDTO);
-                } else if (file.isFile()){
-                    if (archivoRepository.existsByNombreAndUser(file.getName(), usuario)){
-                        Archivo archivo = archivoRepository.findArchivoByNombreAndUser(file.getName(), usuario);
-                        ArchivoDTO archivoDTO = new ArchivoDTO(archivo.getId(), file.getName());
-                        listaPreview.add(archivoDTO);
-                    }
+                } else if (file.isFile()) {
+                    PreviewDTO archivoDTO = new PreviewDTO(archivo.getId(), file.getName(), false);
+                    listaPreview.add(archivoDTO);
                 }
             }
             return new ResponseEntity<>(listaPreview, HttpStatus.OK);
@@ -226,9 +223,7 @@ public class FileServiceImpl implements FileService {
     @Override
     public ResponseEntity downloadFile(Long id, String token) throws SignatureException {
 
-        if (jwtTokenProvider.isTokenExpired(token)) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        } else if (!userRepository.existsByMail(jwtTokenProvider.extractEmail(token))) {
+        if (!checkAuth(token)) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         } else {
             if (archivoRepository.existsById(id)) {

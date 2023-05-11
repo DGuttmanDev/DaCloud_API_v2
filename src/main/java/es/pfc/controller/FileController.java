@@ -2,6 +2,7 @@ package es.pfc.controller;
 
 import es.pfc.business.dto.ArchivoDTO;
 import es.pfc.business.dto.NewFolderDTO;
+import es.pfc.business.dto.PreviewDTO;
 import es.pfc.business.model.Archivo;
 import es.pfc.business.repository.ArchivoRepository;
 import es.pfc.business.service.FileService;
@@ -51,8 +52,8 @@ public class FileController {
     }
 
     @GetMapping("/home/preview")
-    public ResponseEntity<List<ArchivoDTO>> getPreview( @RequestHeader("token") String token) throws SignatureException {
-        return fileService.getPreview(token);
+    public ResponseEntity<List<PreviewDTO>> getHomePreview(@RequestHeader("token") String token) throws SignatureException {
+        return fileService.getHomePreview(token);
     }
 
     @GetMapping("/download")
