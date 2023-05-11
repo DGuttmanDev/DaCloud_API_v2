@@ -111,41 +111,31 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public ResponseEntity saveSingleFile(MultipartFile file) {
+    public ResponseEntity saveFile(MultipartFile file) throws IOException {
 
         try {
 
-            Archivo archivoExistente = archivoRepository.findArchivoByNombre(file.getOriginalFilename());
             byte[] bytes = file.getBytes();
             Path path = Paths.get(UPLOAD_DIR + File.separator + file.getOriginalFilename());
-
-            if (archivoExistente == null) {
 
                 if (Files.exists(path)) {
                     System.err.println("Error, archivo existente en el sistema pero no registrado en base de datos.");
                     throw new SaveFileException();
                 } else {
                     Files.write(path, bytes);
+                    long sizeBytes = Files.size(path);
                     Archivo archivo = new Archivo();
                     archivo.setNombre(file.getOriginalFilename());
+                    archivo.setFileSize(sizeBytes);
                     Archivo archivoGuardado = archivoRepository.save(archivo);
-                    return ResponseEntity.status(HttpStatus.OK).body(archivoGuardado.getId());
                 }
-
-            } else {
-
-                if (!Files.exists(path)) {
-                    System.err.println("Error, archivo registrado en base de datos pero no encontrado en el sistema.");
-                    throw new SaveFileException();
-                }
-
-            }
 
         } catch (IOException e) {
             throw new SaveFileException();
         }
 
-        return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        return ResponseEntity.status(HttpStatus.OK).body("");
+
     }
 
     @Override
@@ -170,7 +160,7 @@ public class FileServiceImpl implements FileService {
                 Archivo archivo = archivoRepository.findById(id).orElse(null);
                 User usuario = userRepository.findByMail(jwtTokenProvider.extractEmail(token));
                 Path path = Paths.get(UPLOAD_DIR + File.separator + usuario.getNick() + File.separator + archivo.getNombre());
-                if (!Files.exists(path)){
+                if (!Files.exists(path)) {
                     return new ResponseEntity(HttpStatus.NOT_FOUND);
                 } else {
                     File archivo2 = new File(path.toUri());

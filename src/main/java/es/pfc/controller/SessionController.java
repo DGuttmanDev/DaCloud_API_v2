@@ -23,6 +23,8 @@ public class SessionController {
 
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody LoginDTO usuario) {
+        System.out.println(usuario.getMail());
+        System.out.println(usuario.getPassword());
         return sessionService.login(usuario);
     }
 
