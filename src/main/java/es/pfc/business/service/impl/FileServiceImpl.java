@@ -1,6 +1,7 @@
 package es.pfc.business.service.impl;
 
 import es.pfc.business.dto.ArchivoDTO;
+import es.pfc.business.dto.NewFolderDTO;
 import es.pfc.business.mapper.ArchivoMapper;
 import es.pfc.business.model.Archivo;
 import es.pfc.business.model.User;
@@ -80,6 +81,9 @@ public class FileServiceImpl implements FileService {
                             archivo.setNombre(file.getOriginalFilename());
                             archivo.setFileSize(sizeBytes);
                             archivo.setUser(usuario);
+
+                            File fileAbsolutePath = new File(path.toUri());
+                            archivo.setPath(fileAbsolutePath.getAbsolutePath());
                             Archivo archivoGuardado = archivoRepository.save(archivo);
                             archivosGuardados.add(archivoMapper.archivoToArchivoDTO(archivoGuardado));
                         }
@@ -111,7 +115,7 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public ResponseEntity saveFile(MultipartFile file) throws IOException {
+    public ResponseEntity saveFile(MultipartFile file) {
 
         try {
 
@@ -136,6 +140,34 @@ public class FileServiceImpl implements FileService {
 
         return ResponseEntity.status(HttpStatus.OK).body("");
 
+    }
+
+    @Override
+    public ResponseEntity createFolder(NewFolderDTO newFolderDTO, String token) throws SignatureException {
+        if (!checkAuth(token)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else {
+            User usuario = userRepository.findByMail(jwtTokenProvider.extractEmail(token));
+            if (newFolderDTO.getIdDirectorioPadre() == 0L){
+                File nuevoDirectorio = new File(UPLOAD_DIR + File.separator + usuario.getNick() + File.separator + newFolderDTO.getNombreDirectorio());
+                boolean dirStatus = nuevoDirectorio.mkdir();
+                if (dirStatus){
+                    Archivo archivo = new Archivo(newFolderDTO.getNombreDirectorio());
+                    archivo.setUser(usuario);
+                    archivo.setPath(nuevoDirectorio.getAbsolutePath());
+                    archivoRepository.save(archivo);
+
+                    ArchivoDTO archivoDTO = archivoMapper.archivoToArchivoDTO(archivo);
+                    return new ResponseEntity(archivoDTO, HttpStatus.OK);
+                } else {
+                    return new ResponseEntity<>(HttpStatus.CONFLICT);
+                }
+            } else {
+                Archivo directorioPadre = archivoRepository.getById(newFolderDTO.getIdDirectorioPadre());
+            }
+
+        }
+        return null;
     }
 
     @Override
@@ -198,6 +230,10 @@ public class FileServiceImpl implements FileService {
         }
 
         return null;
+    }
+
+    private boolean checkAuth(String token) throws SignatureException {
+        return !jwtTokenProvider.isTokenExpired(token) && userRepository.existsByMail(jwtTokenProvider.extractEmail(token));
     }
 
 }
