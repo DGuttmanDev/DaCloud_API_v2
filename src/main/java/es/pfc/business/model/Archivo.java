@@ -17,10 +17,18 @@ public class Archivo implements Serializable {
 
     private String nombre;
 
+    private String path;
+
+    private long fileSize;
+
+    @ManyToOne
+    private User user;
+
     public Archivo() {
     }
 
     public Archivo(String nombre) {
         this.nombre = nombre;
     }
+
 }

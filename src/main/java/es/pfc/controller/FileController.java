@@ -1,7 +1,11 @@
 package es.pfc.controller;
 
 import es.pfc.business.dto.ArchivoDTO;
+import es.pfc.business.dto.NewFolderDTO;
+import es.pfc.business.model.Archivo;
+import es.pfc.business.repository.ArchivoRepository;
 import es.pfc.business.service.FileService;
+import es.pfc.exception.MissingTokenHeaderException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +14,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.security.SignatureException;
 import java.util.List;
 import java.util.Map;
 
@@ -22,31 +29,48 @@ public class FileController {
     private FileService fileService;
 
     @PostMapping("/upload")
-    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(@RequestParam("files") List<MultipartFile> files) {
+    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(
+            @RequestParam("files") List<MultipartFile> files,
+            @RequestParam("dir_id") Long idDirectorioPadre,
+            @RequestHeader("token") String token) throws SignatureException{
         if (files.isEmpty()) {
             throw new HttpMessageNotReadableException("");
         }
-        return fileService.saveFiles(files);
-    }
-    @PostMapping("/single/upload")
-    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveSingleFile(@RequestParam("file") MultipartFile file) {
-        if (file == null) {
-            throw new HttpMessageNotReadableException("");
+        if (token.isEmpty()){
+            throw new MissingTokenHeaderException();
         }
-        return fileService.saveSingleFile(file);
+        return fileService.saveFiles(files, idDirectorioPadre, token);
     }
 
-    @GetMapping("/test")
-    public ResponseEntity replaceFiles() {
-        return new ResponseEntity<>("Hola mundo", HttpStatus.OK);
+    // TEMPORAL
+    @PostMapping("/upload/single")
+    public ResponseEntity saveFile(
+            @RequestParam("file") MultipartFile file
+    ) throws IOException {
+        return fileService.saveFile(file);
     }
 
-    @PostMapping("/b")
-    public ResponseEntity<List<ArchivoDTO>> duplicateFiles(@RequestParam("files") List<MultipartFile> files) {
-        if (files.isEmpty()) {
-            throw new HttpMessageNotReadableException("");
-        }
-        return null;
+    @PostMapping("/new/folder")
+    public ResponseEntity createFolder(
+            @RequestBody NewFolderDTO newFolderDTO,
+            @RequestHeader("token") String token
+    ) throws SignatureException {
+        return fileService.createFolder(newFolderDTO, token);
+    }
+
+    @GetMapping("/home/preview")
+    public ResponseEntity<List<ArchivoDTO>> getPreview(
+            @RequestHeader("token") String token
+    ) throws SignatureException {
+        return fileService.getPreview(token);
+    }
+
+    @GetMapping("/download")
+    public ResponseEntity downloadFile(
+            @RequestParam("id") Long id,
+            @RequestHeader("token") String token
+    ) throws SignatureException {
+        return fileService.downloadFile(id, token);
     }
 
 }
