@@ -32,11 +32,12 @@ public class FileController {
     public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(
             @RequestParam("files") List<MultipartFile> files,
             @RequestParam("dir_id") Long idDirectorioPadre,
-            @RequestHeader("token") String token) throws SignatureException{
+            @RequestHeader("token") String token) throws SignatureException {
+        System.out.println("Entro a subir archivo");
         if (files.isEmpty()) {
             throw new HttpMessageNotReadableException("");
         }
-        if (token.isEmpty()){
+        if (token.isEmpty()) {
             throw new MissingTokenHeaderException();
         }
         return fileService.saveFiles(files, idDirectorioPadre, token);
@@ -71,6 +72,23 @@ public class FileController {
             @RequestHeader("token") String token
     ) throws SignatureException {
         return fileService.downloadFile(id, token);
+    }
+
+    @DeleteMapping("/delete")
+    public ResponseEntity deleteFile(
+            @RequestParam("id") Long id,
+            @RequestHeader("token") String token
+    ) throws SignatureException {
+        return fileService.deleteFile(id, token);
+    }
+
+    @PostMapping("/rename")
+    public ResponseEntity renameFile(
+            @RequestHeader("token") String token,
+            @RequestBody ArchivoDTO archivoDTO
+    ) throws SignatureException {
+        System.out.println(archivoDTO.getNombreArchivo());
+        return fileService.renameFile(token, archivoDTO);
     }
 
 }

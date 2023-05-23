@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -24,5 +25,9 @@ public interface FileService {
     ResponseEntity<List<ArchivoDTO>> getPreview(String token) throws SignatureException;
 
     ResponseEntity downloadFile(Long id, String token) throws SignatureException;
+
+    ResponseEntity deleteFile(Long id, String token) throws SignatureException;
+
+    ResponseEntity renameFile(String token, ArchivoDTO archivoDTO) throws SignatureException;
 
 }

@@ -247,6 +247,57 @@ public class FileServiceImpl implements FileService {
         return null;
     }
 
+    @Override
+    public ResponseEntity deleteFile(Long id, String token) throws SignatureException {
+        if (!checkAuth(token)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else {
+            User usuario = userRepository.findByMail(jwtTokenProvider.extractEmail(token));
+            if (usuario == null){
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            }
+            Archivo archivo = archivoRepository.findById(id).orElse(null);
+            if (archivo == null){
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+            try{
+                File file = new File(archivo.getPath());
+                boolean deleted = file.delete();
+                archivoRepository.delete(archivo);
+                return new ResponseEntity<>(HttpStatus.OK);
+            } catch (Exception exception){
+                return new ResponseEntity<>(HttpStatus.CONFLICT);
+            }
+        }
+    }
+
+    @Override
+    public ResponseEntity renameFile(String token, ArchivoDTO archivoDTO) throws SignatureException {
+        if (!checkAuth(token)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else {
+            User usuario = userRepository.findByMail(jwtTokenProvider.extractEmail(token));
+            if (usuario == null){
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            }
+            Archivo archivo = archivoRepository.findById(archivoDTO.getIdArchivo()).orElse(null);
+            if (archivo == null){
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+            try {
+                File file = new File(archivo.getPath());
+                File renombrado = new File(file.getParent(), archivoDTO.getNombreArchivo());
+                boolean comprobacion = file.renameTo(renombrado);
+                archivo.setNombre(archivoDTO.getNombreArchivo());
+                archivo.setPath(renombrado.getAbsolutePath());
+                archivoRepository.save(archivo);
+                return new ResponseEntity<>(HttpStatus.OK);
+            } catch (Exception exception){
+                return new ResponseEntity<>(HttpStatus.CONFLICT);
+            }
+        }
+    }
+
     private boolean checkAuth(String token) throws SignatureException {
         return !jwtTokenProvider.isTokenExpired(token) && userRepository.existsByMail(jwtTokenProvider.extractEmail(token));
     }
