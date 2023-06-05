@@ -1,5 +1,6 @@
 package es.pfc.business.service.impl;
 
+import es.pfc.business.dto.DatosDTO;
 import es.pfc.business.dto.LoginDTO;
 import es.pfc.business.dto.RegisterDTO;
 import es.pfc.business.mapper.UserMapper;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.security.SignatureException;
 
 @Service
 public class SessionServiceImpl implements SessionService {
@@ -67,6 +69,83 @@ public class SessionServiceImpl implements SessionService {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
+    }
+
+    @Override
+    public ResponseEntity suscripcion(String token, String suscripcion) throws SignatureException {
+        if (jwtTokenProvider.isTokenExpired(token)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else if (!userRepository.existsByMail(jwtTokenProvider.extractEmail(token))) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else {
+            User usuario = userRepository.findByMail(jwtTokenProvider.extractEmail(token));
+            if (usuario == null){
+                return new ResponseEntity(HttpStatus.NOT_FOUND);
+            } else {
+                usuario.setSubscription(Subscription.valueOf(suscripcion));
+                userRepository.save(usuario);
+                return new ResponseEntity<>(HttpStatus.OK);
+            }
+        }
+    }
+
+    @Override
+    public ResponseEntity suscripcionActual(String token) throws SignatureException {
+        if (jwtTokenProvider.isTokenExpired(token)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else if (!userRepository.existsByMail(jwtTokenProvider.extractEmail(token))) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else {
+            User usuario = userRepository.findByMail(jwtTokenProvider.extractEmail(token));
+            if (usuario == null) {
+                return new ResponseEntity(HttpStatus.NOT_FOUND);
+            } else {
+                return new ResponseEntity<>(usuario.getSubscription(), HttpStatus.OK);
+            }
+        }
+    }
+
+    @Override
+    public ResponseEntity datosActuales(String token) throws SignatureException {
+        if (jwtTokenProvider.isTokenExpired(token)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else if (!userRepository.existsByMail(jwtTokenProvider.extractEmail(token))) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else {
+            User usuario = userRepository.findByMail(jwtTokenProvider.extractEmail(token));
+            if (usuario == null) {
+                return new ResponseEntity(HttpStatus.NOT_FOUND);
+            } else {
+                DatosDTO datosDTO = new DatosDTO();
+                datosDTO.setNombre(usuario.getNombre());
+                datosDTO.setApellidos(usuario.getApellidos());
+                return new ResponseEntity<>(datosDTO, HttpStatus.OK);
+            }
+        }
+    }
+
+    @Override
+    public ResponseEntity actualizarDatos(String token, DatosDTO datosDTO) throws SignatureException {
+        if (jwtTokenProvider.isTokenExpired(token)) {
+            System.out.println("no autorizado");
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else if (!userRepository.existsByMail(jwtTokenProvider.extractEmail(token))) {
+            System.out.println("no autorizado");
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } else {
+            System.out.println("hola antes");
+            User usuario = userRepository.findByMail(jwtTokenProvider.extractEmail(token));
+            if (usuario == null) {
+                return new ResponseEntity(HttpStatus.NOT_FOUND);
+            } else {
+                System.out.println("Hola");
+                usuario.setNombre(datosDTO.getNombre());
+                usuario.setApellidos(datosDTO.getApellidos());
+                System.out.println("actualizado:"+ usuario.getNombre());
+                userRepository.save(usuario);
+                return new ResponseEntity<>(HttpStatus.OK);
+            }
+        }
     }
 
 }
