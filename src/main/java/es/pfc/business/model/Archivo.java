@@ -21,6 +21,10 @@ public class Archivo implements Serializable {
 
     private long fileSize;
 
+    private boolean folder;
+
+    private Long directorioPadre;
+
     @ManyToOne
     private User user;
 

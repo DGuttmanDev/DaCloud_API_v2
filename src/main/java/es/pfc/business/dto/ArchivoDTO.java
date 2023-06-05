@@ -9,5 +9,6 @@ public class ArchivoDTO {
 
     private Long idArchivo;
     private String nombreArchivo;
+    private boolean folder;
 
 }

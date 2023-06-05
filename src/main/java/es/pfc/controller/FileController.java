@@ -1,12 +1,14 @@
 package es.pfc.controller;
 
 import es.pfc.business.dto.ArchivoDTO;
+import es.pfc.business.dto.DescargaDTO;
 import es.pfc.business.dto.NewFolderDTO;
 import es.pfc.business.model.Archivo;
 import es.pfc.business.repository.ArchivoRepository;
 import es.pfc.business.service.FileService;
 import es.pfc.exception.MissingTokenHeaderException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.SignatureException;
 import java.util.List;
@@ -29,11 +32,10 @@ public class FileController {
     private FileService fileService;
 
     @PostMapping("/upload")
-    public ResponseEntity<Map<String, List<ArchivoDTO>>> saveFiles(
+    public ResponseEntity saveFiles(
             @RequestParam("files") List<MultipartFile> files,
             @RequestParam("dir_id") Long idDirectorioPadre,
             @RequestHeader("token") String token) throws SignatureException {
-        System.out.println("Entro a subir archivo");
         if (files.isEmpty()) {
             throw new HttpMessageNotReadableException("");
         }
@@ -46,9 +48,11 @@ public class FileController {
     // TEMPORAL
     @PostMapping("/upload/single")
     public ResponseEntity saveFile(
-            @RequestParam("file") MultipartFile file
-    ) throws IOException {
-        return fileService.saveFile(file);
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("dir_id") Long idDirectorioPadre,
+            @RequestHeader("token") String token
+    ) throws IOException, SignatureException {
+        return fileService.saveFile(file, idDirectorioPadre, token);
     }
 
     @PostMapping("/new/folder")
@@ -56,6 +60,7 @@ public class FileController {
             @RequestBody NewFolderDTO newFolderDTO,
             @RequestHeader("token") String token
     ) throws SignatureException {
+        System.out.println(newFolderDTO.getIdDirectorioPadre());
         return fileService.createFolder(newFolderDTO, token);
     }
 
@@ -66,12 +71,28 @@ public class FileController {
         return fileService.getPreview(token);
     }
 
+    @GetMapping("/folder/preview")
+    public ResponseEntity<List<ArchivoDTO>> getPreview(
+            @RequestHeader("token") String token,
+            @RequestParam("dir_id") Long id
+    ) throws SignatureException {
+        return fileService.getFolderPreview(token, id);
+    }
+
     @GetMapping("/download")
     public ResponseEntity downloadFile(
             @RequestParam("id") Long id,
             @RequestHeader("token") String token
     ) throws SignatureException {
         return fileService.downloadFile(id, token);
+    }
+
+    @GetMapping("/download/mobile")
+    public ResponseEntity<DescargaDTO> downloadFileMobile(
+            @RequestParam("id") Long id,
+            @RequestHeader("token") String token
+    ) throws SignatureException, IOException {
+        return fileService.downloadFileMobile(id, token);
     }
 
     @DeleteMapping("/delete")
@@ -89,6 +110,14 @@ public class FileController {
     ) throws SignatureException {
         System.out.println(archivoDTO.getNombreArchivo());
         return fileService.renameFile(token, archivoDTO);
+    }
+
+    @GetMapping("/nombre_directorio")
+    public ResponseEntity getNombreDirectorio(
+            @RequestParam("id") Long id,
+            @RequestHeader("token") String token
+    ) throws SignatureException {
+        return fileService.getDirectorioName(token, id);
     }
 
 }

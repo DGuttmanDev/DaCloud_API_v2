@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 public class ArchivoMapper {
 
     public ArchivoDTO archivoToArchivoDTO(Archivo archivo){
-        return new ArchivoDTO(archivo.getId(), archivo.getNombre());
+        return new ArchivoDTO(archivo.getId(), archivo.getNombre(), archivo.isFolder());
     }
 
 }
