@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.SignatureException;
 
-@Controller
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/api/session")
 public class SessionController {
@@ -28,9 +28,19 @@ public class SessionController {
         return sessionService.register(usuario);
     }
 
+    @PostMapping("/register/web")
+    public ResponseEntity registerWeb(@RequestBody RegisterDTO usuario) {
+        return sessionService.registerWeb(usuario);
+    }
+
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody LoginDTO usuario) {
         return sessionService.login(usuario);
+    }
+
+    @PostMapping("/login/web")
+    public ResponseEntity loginWeb(@RequestBody LoginDTO usuario) {
+        return sessionService.loginWeb(usuario);
     }
 
     @PutMapping("/suscripcion")
@@ -50,7 +60,6 @@ public class SessionController {
 
     @PostMapping("/datos/actualizar")
     public ResponseEntity actualizarDatos(@RequestHeader("token") String token, @RequestBody DatosDTO datosDTO) throws SignatureException {
-        System.out.println(datosDTO.getNombre());
         return sessionService.actualizarDatos(token, datosDTO);
     }
 

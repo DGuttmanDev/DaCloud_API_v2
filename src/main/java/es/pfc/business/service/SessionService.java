@@ -13,7 +13,11 @@ public interface SessionService {
 
     ResponseEntity register(RegisterDTO usuario);
 
+    ResponseEntity registerWeb(RegisterDTO usuario);
+
     ResponseEntity login(LoginDTO usuario);
+
+    ResponseEntity loginWeb(LoginDTO usuario);
 
     ResponseEntity suscripcion(String token, String suscripcion) throws SignatureException;
 

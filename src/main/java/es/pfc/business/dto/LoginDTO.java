@@ -13,7 +13,7 @@ public class LoginDTO implements Serializable {
     @Serial
     private static final long serialVersionUID = -6792928122761986355L;
 
-    String mail;
-    String password;
+    private String mail;
+    private String password;
 
 }
