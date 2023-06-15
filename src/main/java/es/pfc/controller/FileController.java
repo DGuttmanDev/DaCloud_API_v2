@@ -52,7 +52,7 @@ public class FileController {
             @RequestBody NewFolderDTO newFolderDTO,
             @RequestHeader("token") String token
     ) throws SignatureException {
-        System.out.println(newFolderDTO.getIdDirectorioPadre());
+        System.out.println("entro crear carpeta" + newFolderDTO.getNombreDirectorio() + " " + newFolderDTO.getIdDirectorioPadre());
         return fileService.createFolder(newFolderDTO, token);
     }
 

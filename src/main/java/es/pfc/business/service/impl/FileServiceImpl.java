@@ -12,6 +12,7 @@ import es.pfc.business.service.FileService;
 import es.pfc.business.service.FileUtil;
 import es.pfc.exception.SaveFileException;
 import es.pfc.security.JwtTokenProvider;
+import org.hibernate.tool.schema.internal.exec.ScriptTargetOutputToFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -159,7 +160,6 @@ public class FileServiceImpl implements FileService {
         } else {
             User usuario = userRepository.findByMail(jwtTokenProvider.extractEmail(token));
             if (newFolderDTO.getIdDirectorioPadre() == 0L){
-                int contador = 0;
                 File nuevoDirectorio = new File(UPLOAD_DIR + File.separator + usuario.getNick() + File.separator + newFolderDTO.getNombreDirectorio());
                 if (nuevoDirectorio.exists()){
                     return new ResponseEntity<>("Ya existe un directorio con el nombre especificado.", HttpStatus.CONFLICT);
@@ -170,12 +170,7 @@ public class FileServiceImpl implements FileService {
                 Archivo directorioPadre = archivoRepository.findById(newFolderDTO.getIdDirectorioPadre()).orElse(null);
                 if (directorioPadre != null){
                     File nuevoDirectorio = new File(directorioPadre.getPath() + File.separator + newFolderDTO.getNombreDirectorio());
-                    if (!nuevoDirectorio.exists()){
-                        return getResponseEntity(newFolderDTO, usuario, nuevoDirectorio);
-                    } else {
-                        return new ResponseEntity<>("Ya existe un directorio con el nombre especificado.", HttpStatus.CONFLICT);
-                    }
-
+                    return getResponseEntity(newFolderDTO, usuario, nuevoDirectorio);
                 }
             }
 
@@ -184,7 +179,11 @@ public class FileServiceImpl implements FileService {
     }
 
     private ResponseEntity<ArchivoDTO> getResponseEntity(NewFolderDTO newFolderDTO, User usuario, File nuevoDirectorio) {
+        System.out.println(nuevoDirectorio.getName());
+        System.out.println(nuevoDirectorio.getAbsolutePath());
+        System.out.println(nuevoDirectorio.exists());
         boolean dirStatus = nuevoDirectorio.mkdir();
+        System.out.println(dirStatus);
         if (dirStatus){
             Archivo archivo = new Archivo(newFolderDTO.getNombreDirectorio());
             archivo.setFolder(true);
@@ -328,12 +327,53 @@ public class FileServiceImpl implements FileService {
             }
             try{
                 File file = new File(archivo.getPath());
-                boolean deleted = file.delete();
-                archivoRepository.delete(archivo);
-                return new ResponseEntity<>(HttpStatus.OK);
+                if (file.isDirectory()){
+                    boolean verificadoBorrado = deleteDirectory(file);
+                    if (verificadoBorrado){
+                        archivoRepository.delete(archivo);
+                    }
+                    return new ResponseEntity<>(HttpStatus.OK);
+                } else{
+                    boolean deleted = file.delete();
+                    archivoRepository.delete(archivo);
+                    return new ResponseEntity<>(HttpStatus.OK);
+                }
+
             } catch (Exception exception){
                 return new ResponseEntity<>(HttpStatus.CONFLICT);
             }
+        }
+    }
+
+    private boolean deleteDirectory(File directory) {
+        File[] files = directory.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    Archivo archivo = archivoRepository.findByPath(file.getAbsolutePath());
+                    if (archivo != null){
+                        System.out.println("instancia: "+archivo.getPath());
+                        archivoRepository.delete(archivo);
+                    }
+                    System.out.println("borrar subcarpeta: "+file.getName());
+                    deleteDirectory(file);
+                } else {
+                    Archivo archivo = archivoRepository.findByPath(file.getAbsolutePath());
+
+                    if (archivo != null){
+                        System.out.println("instancia: "+archivo.getPath());
+                        archivoRepository.delete(archivo);
+                    }
+                    System.out.println("borrar archivo: "+file.getName());
+                    file.delete();
+                }
+            }
+        }
+        // Eliminar directorio vacío
+        if (directory.delete()) {
+            return true;
+        } else {
+            return false;
         }
     }
 
